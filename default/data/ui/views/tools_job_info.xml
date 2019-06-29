@@ -1,0 +1,1151 @@
+<!--
+  Drivestats Splunk App for the SPL_UK User Group
+  Copyright (C) 2019 Graham Morley
+
+  A full copy of the license can be found in the LICENSE.md file
+  in the root of the app directory.
+-->
+
+<form hideEdit="false" hideFilters="true" theme="dark">
+  <label>Tools - Job Info</label>
+
+  <fieldset autoRun="true" submitButton="false">
+    <input type="dropdown" token="tok_splunk_server" searchWhenChanged="true">
+      <label>Select Server</label>
+
+      <search>
+        <query>
+          <![CDATA[| rest /servicesNS/-/-/server/info]]>
+        </query>
+      </search>
+
+      <choice value="local">Local</choice>
+      <choice value="*">All</choice>
+
+      <fieldForLabel>splunk_server</fieldForLabel>
+      <fieldForValue>splunk_server</fieldForValue>
+
+      <default>Local</default>
+
+      <change>
+        <condition label="All">
+          <set token="tok_splunk_server_label">$label$</set>
+          <unset token="tok_single_splunk_server"></unset>
+          <unset token="tok_base_jobs_sid"></unset>
+          <unset token="tok_base_jobs_done"></unset>
+          <unset token="tok_base_stats_done"></unset>
+          <unset token="tok_base_job_chart_done"></unset>
+          <unset token="tok_base_job_chart_2_done"></unset>
+          <unset token="tok_base_jobs_filtered_done"></unset>
+          <unset token="tok_base_stats_filtered_done"></unset>
+          <unset token="tok_base_job_chart_filtered_done"></unset>
+          <unset token="tok_base_job_chart_2_filtered_done"></unset>
+          <unset token="tok_show_info_filtered_detail"></unset>
+        </condition>
+        <condition>
+          <set token="tok_splunk_server_label">$label$</set>
+          <set token="tok_single_splunk_server">true</set>
+          <unset token="tok_base_jobs_sid"></unset>
+          <unset token="tok_base_jobs_done"></unset>
+          <unset token="tok_base_stats_done"></unset>
+          <unset token="tok_base_job_chart_done"></unset>
+          <unset token="tok_base_job_chart_2_done"></unset>
+          <unset token="tok_base_jobs_filtered_done"></unset>
+          <unset token="tok_base_stats_filtered_done"></unset>
+          <unset token="tok_base_job_chart_filtered_done"></unset>
+          <unset token="tok_base_job_chart_2_filtered_done"></unset>
+          <unset token="tok_show_info_filtered_detail"></unset>
+        </condition>
+      </change>
+
+    </input>
+
+    <input type="text" token="tok_base_job_refresh" searchWhenChanged="true">
+      <label>Refresh (in sec) [0 to pause]</label>
+
+      <default>300</default>
+
+    </input>
+
+    <input type="text" token="tok_base_filter_search" searchWhenChanged="true">
+      <label>Global Search Filter</label>
+
+      <default></default>
+
+    </input>
+
+    <input type="text" token="tok_base_filter_where" searchWhenChanged="true">
+      <label>Global Where Filter</label>
+
+      <default></default>
+
+    </input>
+
+    <input type="link" token="tok_stats_level">
+      <label>Show Stats Level</label>
+
+      <default>Global</default>
+
+      <choice value="0">Global</choice>
+      <choice value="1">Sub-Filter</choice>
+      <choice value="2">Both</choice>
+      <choice value="3">None</choice>
+
+      <change>
+        <condition value="0">
+          <set token="tok_show_stats_global">1</set>
+          <unset token="tok_show_stats_filtered"></unset>
+        </condition>
+        <condition value="1">
+          <unset token="tok_show_stats_global"></unset>
+          <set token="tok_show_stats_filtered">1</set>
+        </condition>
+        <condition value="2">
+          <set token="tok_show_stats_global">1</set>
+          <set token="tok_show_stats_filtered">1</set>
+        </condition>
+        <condition value="3">
+          <unset token="tok_show_stats_global"></unset>
+          <unset token="tok_show_stats_filtered"></unset>
+        </condition>
+      </change>
+    </input>
+
+
+    <input type="link" token="tok_global_reset_all" id="input_short_3">
+      <label>Reset</label>
+
+      <choice value="0">Reset All</choice>
+
+      <change>
+        <condition value="0">
+          <unset token="tok_global_reset_all"></unset>
+          <unset token="form.tok_global_reset_all"></unset>
+          <unset token="tok_splunk_server"></unset>
+          <unset token="form.tok_splunk_server"></unset>
+          <unset token="tok_base_job_refresh"></unset>
+          <unset token="form.tok_base_job_refresh"></unset>
+          <unset token="tok_base_filter_search"></unset>
+          <unset token="form.tok_base_filter_search"></unset>
+          <unset token="tok_base_filter_where"></unset>
+          <unset token="form.tok_base_filter_where"></unset>
+          <unset token="tok_stats_level"></unset>
+          <unset token="form.tok_stats_level"></unset>
+        </condition>
+      </change>
+
+    </input>
+
+    <input type="link" token="tok_enable_help">
+      <label>Show Help Panels</label>
+
+      <default>No</default>
+
+      <choice value="0">No</choice>
+      <choice value="1">Yes</choice>
+
+      <change>
+        <condition value="1">
+          <set token="tok_show_help">true</set>
+        </condition>
+        <condition>
+          <unset token="tok_show_help"></unset>
+        </condition>
+      </change>
+
+    </input>
+  </fieldset>
+
+  <!-- Global Base Searched START -->
+
+  <search id="base_job_info">
+    <query>
+      <![CDATA[| rest splunk_server=$tok_splunk_server|s$ /servicesNS/-/-/search/jobs
+      | search $tok_base_filter_search|n$
+      | where $tok_base_filter_where|n$
+      | fields - field*, performance.* ]]>
+    </query>
+
+    <!-- Time doesn't matter as this is a REST call. But hey, why not? -->
+    <earliest>-1m</earliest>
+    <latest>now</latest>
+
+    <refreshType>delay</refreshType>
+    <refresh>$tok_base_job_refresh$</refresh>
+
+    <progress>
+      <unset token="tok_show_info_filtered_detail"></unset>
+    </progress>
+
+    <done>
+      <set token="tok_base_jobs_sid">$job.sid$</set>
+      <set token="tok_base_jobs_done">1</set>
+    </done>
+
+  </search>
+
+  <search base="base_job_info" id="base_job_stats">
+    <query>
+      <![CDATA[| stats count,
+      count(eval(isDone=="1")) as ct_isDone,
+      count(eval(isFailed=="1")) as ct_isFailed,
+      count(eval(isFinalized=="1")) as ct_isFinalized,
+      count(eval(isPaused=="1")) as ct_isPaused,
+      count(eval(isReatTimeSearch=="1")) as ct_isRealTimeSearch,
+      count(eval(isSaved=="1")) as ct_isSaved,
+      count(eval(isSavedSearch=="1")) as ct_isSavedSearch,
+      count(eval(dispatchState=="DONE")) as ct_Done,
+      count(eval(dispatchState=="RUNNING")) as ct_Running,
+      count(eval(dispatchState=="PARSING")) as ct_Parsing,
+      count(eval(dispatchState=="QUEUED")) as ct_Queued,
+      count(eval(dispatchState=="PAUSED")) as ct_Paused,
+      count(eval(dispatchState=="FINALIZING")) as ct_Finalizing,
+      count(eval(dispatchState=="FAILED")) as ct_Failed,
+      max(eval(if(dispatchState=="DONE",runDuration,null()))) as max_runDuration_done,
+      avg(eval(if(dispatchState=="DONE",runDuration,null()))) as avg_runDuration_done,
+      max(eval(if(dispatchState=="RUNNING",runDuration,null()))) as max_runDuration_running,
+      avg(eval(if(dispatchState=="RUNNING",runDuration,null()))) as avg_runDuration_running
+      | foreach *_runDuration_*
+      [| eval <<FIELD>>_dur=tostring(round(<<FIELD>>,2),"duration")]]]>
+    </query>
+
+    <done>
+      <set token="tok_base_stats_done">1</set>
+    </done>
+
+  </search>
+
+  <search base="base_job_info" id="base_job_chart">
+    <query>
+      <![CDATA[| bin span=1log10 bins=10 runDuration
+      | chart limit=10 useother=t count over runDuration by author]]>
+    </query>
+
+    <done>
+      <set token="tok_base_job_chart_done">1</set>
+    </done>
+
+  </search>
+
+  <search base="base_job_info" id="base_job_chart_2">
+    <query>
+      <![CDATA[| bin span=1log10 bins=10 runDuration
+      | chart count over runDuration]]>
+    </query>
+
+    <done>
+      <set token="tok_base_job_chart_2_done">1</set>
+    </done>
+
+  </search>
+
+  <!-- Global Base Searched END -->
+  <!-- Filtered Base Searched START -->
+
+  <search id="base_job_info_filtered">
+    <query>
+      <![CDATA[| loadjob $tok_base_jobs_sid$
+      | fields - field*
+      | search dispatchState=$filter_table_dispatch_state|s$ runDuration$filter_table_runduration_logic|n$$filter_table_runduration_value$ $filter_table_inc_splunk_system_user|n$ $filter_table_inc_admin_user|n$ author=$filter_table_author|s$ eai:acl.app=$filter_table_app|s$ provenance=$filter_table_provenance|s$ label=$filter_table_label|s$
+      | eval runDuration=round(runDuration,4)]]>
+    </query>
+
+    <!-- Time doesn't matter as this is a REST call. But hey, why not? -->
+    <earliest>-1m</earliest>
+    <latest>now</latest>
+
+    <progress>
+      <unset token="tok_show_info_filtered_detail"></unset>
+    </progress>
+
+    <done>
+      <set token="tok_base_jobs_filtered_done">1</set>
+    </done>
+
+  </search>
+
+  <search base="base_job_info_filtered" id="base_job_stats_filtered">
+    <query>
+      <![CDATA[| stats count,
+      count(eval(isDone=="1")) as ct_isDone,
+      count(eval(isFailed=="1")) as ct_isFailed,
+      count(eval(isFinalized=="1")) as ct_isFinalized,
+      count(eval(isPaused=="1")) as ct_isPaused,
+      count(eval(isReatTimeSearch=="1")) as ct_isRealTimeSearch,
+      count(eval(isSaved=="1")) as ct_isSaved,
+      count(eval(isSavedSearch=="1")) as ct_isSavedSearch,
+      count(eval(dispatchState=="DONE")) as ct_Done,
+      count(eval(dispatchState=="RUNNING")) as ct_Running,
+      count(eval(dispatchState=="PARSING")) as ct_Parsing,
+      count(eval(dispatchState=="QUEUED")) as ct_Queued,
+      count(eval(dispatchState=="PAUSED")) as ct_Paused,
+      count(eval(dispatchState=="FINALIZING")) as ct_Finalizing,
+      count(eval(dispatchState=="FAILED")) as ct_Failed,
+      max(eval(if(dispatchState=="DONE",runDuration,null()))) as max_runDuration_done,
+      avg(eval(if(dispatchState=="DONE",runDuration,null()))) as avg_runDuration_done,
+      max(eval(if(dispatchState=="RUNNING",runDuration,null()))) as max_runDuration_running,
+      avg(eval(if(dispatchState=="RUNNING",runDuration,null()))) as avg_runDuration_running
+      | foreach *_runDuration_*
+      [| eval <<FIELD>>_dur=tostring(round(<<FIELD>>,2),"duration")]]]>
+    </query>
+
+    <done>
+      <set token="tok_base_stats_filtered_done">1</set>
+    </done>
+
+  </search>
+
+  <search base="base_job_info_filtered" id="base_job_chart_filtered">
+    <query>
+      <![CDATA[| bin span=1log10 bins=10 runDuration
+      | chart limit=10 useother=t count over runDuration by author]]>
+    </query>
+
+    <done>
+      <set token="tok_base_job_chart_filtered_done">1</set>
+    </done>
+
+  </search>
+
+  <search base="base_job_info_filtered" id="base_job_chart_2_filtered">
+    <query>
+      <![CDATA[| bin span=1log10 bins=10 runDuration
+      | chart count over runDuration]]>
+    </query>
+
+    <done>
+      <set token="tok_base_job_chart_2_filtered_done">1</set>
+    </done>
+
+  </search>
+
+  <!-- Filtered Base Searched END -->
+
+  <row>
+    <panel depends="$tok_show_help$">
+      <!-- This is just a place holder for now -->
+      <html>
+        <h2>Help / Notes</h2>
+        <p>This is some basic information to help with using this Dashboard</p>
+        <!-- This is a sample table / List layout for screenshots -->
+        <div style="padding: 7.5px">
+          <ul style="list-style-type: none; padding: 0; margin: 0">
+            <li style="display: inline; padding: 10px">
+              <img src="/static/app/app-name/some-image.png"></img>
+            </li>
+          </ul>
+        </div>
+      </html>
+    </panel>
+
+    <panel depends="$tok_show_help$">
+      <!-- This is just a place holder for now -->
+      <html>
+        <h2>Debug</h2>
+        <p>tok_base_jobs_sid: $tok_base_jobs_sid$</p>
+        <p>tok_base_jobs_done: $tok_base_jobs_done$</p>
+        <p>filter_table_runduration_logic: $filter_table_runduration_logic|n$</p>
+        <p>filter_table_runduration_value: $filter_table_runduration_value|n$</p>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel depends="$tok_base_stats_done$,$tok_show_stats_global$">
+      <title># Jobs "DONE"</title>
+      <single>
+
+        <search base="base_job_stats">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Done</option>
+        <option name="underLabel"># Jobs "DONE"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_done$,$tok_show_stats_global$">
+      <title># Jobs "RUNNING"</title>
+      <single>
+
+        <search base="base_job_stats">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Running</option>
+        <option name="underLabel"># Jobs "RUNNING"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_done$,$tok_show_stats_global$">
+      <title># Jobs "PARSING"</title>
+      <single>
+
+        <search base="base_job_stats">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Parsing</option>
+        <option name="underLabel"># Jobs "PARSING"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_done$,$tok_show_stats_global$">
+      <title># Jobs "QUEUED"</title>
+      <single>
+
+        <search base="base_job_stats">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Queued</option>
+        <option name="underLabel"># Jobs "QUEUED"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_done$,$tok_show_stats_global$">
+      <title># Jobs "PAUSED"</title>
+      <single>
+
+        <search base="base_job_stats">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Paused</option>
+        <option name="underLabel"># Jobs "PAUSED"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_done$,$tok_show_stats_global$">
+      <title># Jobs "FINALIZING"</title>
+      <single>
+
+        <search base="base_job_stats">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Finalizing</option>
+        <option name="underLabel"># Jobs "FINALIZING"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_done$,$tok_show_stats_global$">
+      <title># Jobs "FAILED"</title>
+      <single>
+
+        <search base="base_job_stats">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Failed</option>
+        <option name="underLabel"># Jobs "FAILED"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0xE8918A","0xDC4E41"]</option>
+        <option name="rangeValues">[0,10]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_base_job_chart_done$,$tok_base_job_chart_2_done$,$tok_show_stats_global$">
+      <title>Search runDuration Distribution by author (Scale: 1log10)</title>
+      <chart>
+
+        <search base="base_job_chart">
+          <query></query>
+        </search>
+
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.chart.style">minimal</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.seriesColors">["0xC0DBE5","0xB0CEDD","0x9FC2D5","0x8EB4CC","0x7DA8C4","0x6C9CBC","0x5990B4","0x4684AC","0x2E79A4","0x006D9C"]</option>
+
+        <!-- 10 Colour Pallet -->
+        <!-- "0xC0DBE5","0xB0CEDD","0x9FC2D5","0x8EB4CC","0x7DA8C4","0x6C9CBC","0x5990B4","0x4684AC","0x2E79A4","0x006D9C" -->
+
+        <!-- 15 Colour Pallet -->
+        <!-- "0xC0DBE5","0xB5D2E0","0xABCADA","0xA0C2D5","0x95BAD0","0x8AB2CB","0x80AAC5","0x75A3C0","0x699ABB","0x5D92B6","0x518BB0","0x4484AC","0x347CA6","0x2374A1","0x006D9C"-->
+
+      </chart>
+    </panel>
+
+    <panel depends="$tok_base_job_chart_done$,$tok_base_job_chart_2_done$,$tok_show_stats_global$">
+      <title>Search runDuration Distribution (Scale: 1log10)</title>
+      <chart>
+
+        <search base="base_job_chart_2">
+          <query></query>
+        </search>
+
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.style">minimal</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.seriesColors">["0xC0DBE5","0xB0CEDD","0x9FC2D5","0x8EB4CC","0x7DA8C4","0x6C9CBC","0x5990B4","0x4684AC","0x2E79A4","0x006D9C"]</option>
+
+        <!-- 10 Colour Pallet -->
+        <!-- "0xC0DBE5","0xB0CEDD","0x9FC2D5","0x8EB4CC","0x7DA8C4","0x6C9CBC","0x5990B4","0x4684AC","0x2E79A4","0x006D9C" -->
+
+        <!-- 15 Colour Pallet -->
+        <!-- "0xC0DBE5","0xB5D2E0","0xABCADA","0xA0C2D5","0x95BAD0","0x8AB2CB","0x80AAC5","0x75A3C0","0x699ABB","0x5D92B6","0x518BB0","0x4484AC","0x347CA6","0x2374A1","0x006D9C" -->
+
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Filtered Stats START -->
+
+  <row>
+    <panel depends="$tok_base_stats_filtered_done$,$tok_show_stats_filtered$">
+      <title># Jobs "DONE"</title>
+      <single>
+
+        <search base="base_job_stats_filtered">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Done</option>
+        <option name="underLabel"># Jobs "DONE"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+        <drilldown>
+          <set token="filter_table_dispatch_state">DONE</set>
+          <set token="form.filter_table_dispatch_state">DONE</set>
+        </drilldown>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_filtered_done$,$tok_show_stats_filtered$">
+      <title># Jobs "RUNNING"</title>
+      <single>
+
+        <search base="base_job_stats_filtered">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Running</option>
+        <option name="underLabel"># Jobs "RUNNING"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+        <drilldown>
+          <set token="filter_table_dispatch_state">RUNNING</set>
+          <set token="form.filter_table_dispatch_state">RUNNING</set>
+        </drilldown>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_filtered_done$,$tok_show_stats_filtered$">
+      <title># Jobs "PARSING"</title>
+      <single>
+
+        <search base="base_job_stats_filtered">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Parsing</option>
+        <option name="underLabel"># Jobs "PARSING"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+        <drilldown>
+          <set token="filter_table_dispatch_state">PARSING</set>
+          <set token="form.filter_table_dispatch_state">PARSING</set>
+        </drilldown>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_filtered_done$,$tok_show_stats_filtered$">
+      <title># Jobs "QUEUED"</title>
+      <single>
+
+        <search base="base_job_stats_filtered">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Queued</option>
+        <option name="underLabel"># Jobs "QUEUED"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+        <drilldown>
+          <set token="filter_table_dispatch_state">QUEUED</set>
+          <set token="form.filter_table_dispatch_state">QUEUED</set>
+        </drilldown>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_filtered_done$,$tok_show_stats_filtered$">
+      <title># Jobs "PAUSED"</title>
+      <single>
+
+        <search base="base_job_stats_filtered">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Paused</option>
+        <option name="underLabel"># Jobs "PAUSED"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+        <drilldown>
+          <set token="filter_table_dispatch_state">PAUSED</set>
+          <set token="form.filter_table_dispatch_state">PAUSED</set>
+        </drilldown>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_filtered_done$,$tok_show_stats_filtered$">
+      <title># Jobs "FINALIZING"</title>
+      <single>
+
+        <search base="base_job_stats_filtered">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Finalizing</option>
+        <option name="underLabel"># Jobs "FINALIZING"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0x006D9C"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+        <drilldown>
+          <set token="filter_table_dispatch_state">FINALIZING</set>
+          <set token="form.filter_table_dispatch_state">FINALIZING</set>
+        </drilldown>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_base_stats_filtered_done$,$tok_show_stats_filtered$">
+      <title># Jobs "FAILED"</title>
+      <single>
+
+        <search base="base_job_stats_filtered">
+          <query></query>
+        </search>
+
+        <option name="field">ct_Failed</option>
+        <option name="underLabel"># Jobs "FAILED"</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006D9C","0xE8918A","0xDC4E41"]</option>
+        <option name="rangeValues">[0,10]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+
+        <drilldown>
+          <set token="filter_table_dispatch_state">FAILED</set>
+          <set token="form.filter_table_dispatch_state">FAILED</set>
+        </drilldown>
+
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel depends="$tok_base_job_chart_filtered_done$,$tok_base_job_chart_2_filtered_done$,$tok_show_stats_filtered$">
+      <title>Search runDuration Distribution by author (Scale: 1log10)</title>
+      <chart>
+
+        <search base="base_job_chart_filtered">
+          <query></query>
+        </search>
+
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.chart.style">minimal</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.seriesColors">["0xC0DBE5","0xB0CEDD","0x9FC2D5","0x8EB4CC","0x7DA8C4","0x6C9CBC","0x5990B4","0x4684AC","0x2E79A4","0x006D9C"]</option>
+
+        <drilldown>
+          <set token="filter_table_author">$click.name2$</set>
+          <set token="form.filter_table_author">$click.name2$</set>
+        </drilldown>
+
+        <!-- 10 Colour Pallet -->
+        <!-- "0xC0DBE5","0xB0CEDD","0x9FC2D5","0x8EB4CC","0x7DA8C4","0x6C9CBC","0x5990B4","0x4684AC","0x2E79A4","0x006D9C" -->
+
+        <!-- 15 Colour Pallet -->
+        <!-- "0xC0DBE5","0xB5D2E0","0xABCADA","0xA0C2D5","0x95BAD0","0x8AB2CB","0x80AAC5","0x75A3C0","0x699ABB","0x5D92B6","0x518BB0","0x4484AC","0x347CA6","0x2374A1","0x006D9C"-->
+
+      </chart>
+    </panel>
+
+    <panel depends="$tok_base_job_chart_filtered_done$,$tok_base_job_chart_2_filtered_done$,$tok_show_stats_filtered$">
+      <title>Search runDuration Distribution (Scale: 1log10)</title>
+      <chart>
+
+        <search base="base_job_chart_2_filtered">
+          <query></query>
+        </search>
+
+        <option name="charting.chart">pie</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.style">minimal</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.seriesColors">["0xC0DBE5","0xB0CEDD","0x9FC2D5","0x8EB4CC","0x7DA8C4","0x6C9CBC","0x5990B4","0x4684AC","0x2E79A4","0x006D9C"]</option>
+
+        <!-- 10 Colour Pallet -->
+        <!-- "0xC0DBE5","0xB0CEDD","0x9FC2D5","0x8EB4CC","0x7DA8C4","0x6C9CBC","0x5990B4","0x4684AC","0x2E79A4","0x006D9C" -->
+
+        <!-- 15 Colour Pallet -->
+        <!-- "0xC0DBE5","0xB5D2E0","0xABCADA","0xA0C2D5","0x95BAD0","0x8AB2CB","0x80AAC5","0x75A3C0","0x699ABB","0x5D92B6","0x518BB0","0x4484AC","0x347CA6","0x2374A1","0x006D9C" -->
+
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Filtered Stats END -->
+
+  <row>
+
+    <!-- Text Box Styling Panel -->
+    <!-- https://answers.splunk.com/answers/623932/how-to-increase-the-textbox-size-when-you-want-to.html -->
+    <panel depends="$jakhg8920367gknj$">
+      <html>
+        <style>
+          #input_short_1
+          {width: 100px !important;}
+
+          #input_short_2
+          {width: 90px !important; text-align: left !important; padding-left: 0px !important;}
+
+          #input_short_2 button
+          {width: inherit !important; text-align: inherit !important; padding-left: inherit !important;}
+
+          #input_short_3
+          {width: 90px !important; text-align: left !important; padding-left: 0px !important;}
+
+          #input_short_3 button
+          {width: inherit !important; text-align: inherit !important; padding-left: inherit !important;}
+
+          #input_medium_1
+          {width: 150px !important;}
+
+          #input_medium_2
+          {width: 150px !important;}
+        </style>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel depends="$tok_base_jobs_done$">
+      <title>Job Info (Count: $tok_table_result_count$)</title>
+
+      <input type="dropdown" token="filter_table_dispatch_state">
+        <label>dispatchState</label>
+
+        <default>*</default>
+
+        <choice value="*">Any</choice>
+        <choice value="DONE">DONE</choice>
+        <choice value="RUNNING">RUNNING</choice>
+        <choice value="PARSING">PARSING</choice>
+        <choice value="QUEUED">QUEUED</choice>
+        <choice value="PAUSED">PAUSED</choice>
+        <choice value="FINALIZING">FINALIZING</choice>
+        <choice value="FAILED">FAILED</choice>
+
+      </input>
+
+      <input type="dropdown" token="filter_table_runduration_logic">
+        <label>runDuration Logic</label>
+
+        <default>&gt;=</default>
+
+        <choice value="=">=</choice>
+        <choice value="&gt;=">&gt;=</choice>
+        <choice value="&lt;=">&lt;=</choice>
+        <choice value="&gt;">&gt;</choice>
+        <choice value="&lt;">&lt;</choice>
+
+      </input>
+
+      <input type="text" token="filter_table_runduration_value">
+        <label>runDuration (numbers only)</label>
+
+        <default>0</default>
+
+      </input>
+
+      <input type="text" token="filter_table_author">
+        <label>Filter Author</label>
+
+        <default>*</default>
+
+      </input>
+
+      <input type="text" token="filter_table_app">
+        <label>Filter App</label>
+
+        <default>*</default>
+
+      </input>
+
+      <input type="text" token="filter_table_provenance">
+        <label>Filter Provenance</label>
+
+        <default>*</default>
+
+      </input>
+
+      <input type="text" token="filter_table_label">
+        <label>Filter Label</label>
+
+        <default>*</default>
+
+      </input>
+    </panel>
+  </row>
+
+  <row>
+    <panel depends="$tok_base_jobs_done$">
+      <input type="multiselect" token="filter_table_fields">
+        <label>Select Columns</label>
+
+        <default>[Standard]</default>
+
+        <choice value="eai:acl.app,provenance,custom.dispatch.earliest_time,custom.dispatch.latest_time,earliestTime, latestTime,label,ttl">[Standard]</choice>
+        <choice value="eai:acl.app">app</choice>
+        <choice value="provenance">provenance</choice>
+        <choice value="custom.dispatch.earliest_time">earliest_time</choice>
+        <choice value="custom.dispatch.latest_time">latest_time</choice>
+        <choice value="earliestTime">earliestTime</choice>
+        <choice value="latestTime">latestTime</choice>
+        <choice value="label">label</choice>
+        <choice value="ttl">ttl</choice>
+        <choice value="updated">updated</choice>
+
+        <delimiter> </delimiter>
+        <prefix></prefix>
+        <suffix></suffix>
+        <valuePrefix></valuePrefix>
+
+      </input>
+
+      <input type="link" token="filter_table_inc_splunk_system_user" id="input_medium_1">
+        <label>Inc. System User</label>
+
+        <choice value="author!=&quot;splunk-system-user&quot;">No</choice>
+        <choice value="*">Yes</choice>
+
+        <default>No</default>
+
+      </input>
+
+      <input type="link" token="filter_table_inc_admin_user" id="input_medium_2">
+        <label>Inc. Admin User</label>
+
+        <choice value="author!=&quot;admin&quot;">No</choice>
+        <choice value="*">Yes</choice>
+
+        <default>Yes</default>
+
+      </input>
+
+      <input type="link" token="tok_table_reset_all" id="input_short_2">
+        <label>Reset</label>
+
+        <choice value="0">Reset All</choice>
+
+        <change>
+          <condition value="0">
+            <unset token="tok_table_reset_all"></unset>
+            <unset token="form.tok_table_reset_all"></unset>
+            <unset token="filter_table_dispatch_state"></unset>
+            <unset token="form.filter_table_dispatch_state"></unset>
+            <unset token="filter_table_runduration_logic"></unset>
+            <unset token="form.filter_table_runduration_logic"></unset>
+            <unset token="filter_table_runduration_value"></unset>
+            <unset token="form.filter_table_runduration_value"></unset>
+            <unset token="filter_table_author"></unset>
+            <unset token="form.filter_table_author"></unset>
+            <unset token="filter_table_app"></unset>
+            <unset token="form.filter_table_app"></unset>
+            <unset token="filter_table_provenance"></unset>
+            <unset token="form.filter_table_provenance"></unset>
+            <unset token="filter_table_label"></unset>
+            <unset token="form.filter_table_label"></unset>
+            <unset token="filter_table_fields"></unset>
+            <unset token="form.filter_table_fields"></unset>
+            <unset token="filter_table_inc_splunk_system_user"></unset>
+            <unset token="form.filter_table_inc_splunk_system_user"></unset>
+            <unset token="filter_table_inc_admin_user"></unset>
+            <unset token="form.filter_table_inc_admin_user"></unset>
+            <unset token="tok_show_info_filtered_detail"></unset>
+          </condition>
+        </change>
+
+      </input>
+    </panel>
+  </row>
+
+  <row>
+    <panel depends="$tok_base_jobs_done$">
+      <table>
+        <search base="base_job_info_filtered">
+          <query>
+            <![CDATA[| fields author dispatchState runDuration $filter_table_fields$ sid
+            | rename custom.dispatch.earliest_time AS earliest_time, custom.dispatch.latest_time AS latest_time
+            | sort limit=0 - runDuration]]>
+          </query>
+
+          <done>
+            <set token="tok_table_result_count">$job.resultCount$</set>
+          </done>
+
+        </search>
+
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+
+        <format type="color" field="runDuration">
+          <colorPalette type="minMidMax" maxColor="#006D9C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+
+        <drilldown>
+          <set token="tok_show_info_filtered_detail">1</set>
+          <set token="tok_job_info_filtered_sid">$row.sid$</set>
+          <set token="tok_job_info_filtered_author">$row.author$</set>
+          <set token="tok_job_info_filtered_dispatch_state">$row.dispatchState$</set>
+          <eval token="tok_job_info_filtered_run_duration"><![CDATA[round($row.runDuration$,2)]]></eval>
+        </drilldown>
+
+      </table>
+    </panel>
+  </row>
+
+  <!-- Used to capture any field, before the transpose in later panels -->
+  <search base="base_job_info_filtered" id="info_filtered_detail_drilldown" depends="$tok_base_jobs_done$,$tok_show_info_filtered_detail$">
+    <query>
+      <![CDATA[| where sid=$tok_job_info_filtered_sid|s$]]>
+    </query>
+
+    <done>
+      <set token="tok_job_info_filtered_drilldown_updated">$result.updated$</set>
+      <eval token="tok_job_info_filtered_messages_fatal"><![CDATA[case(isnotnull($result.messages.fatal$),"FAILED MSG: ".$result.messages.fatal$,true(),"")]]></eval>
+    </done>
+
+  </search>
+
+  <row>
+    <panel depends="$tok_base_jobs_done$,$tok_show_info_filtered_detail$">
+      <html>
+        <h2><strong>Job Detail</strong> - [<strong>Author:</strong> $tok_job_info_filtered_author$] [<strong>Dispatch State:</strong> $tok_job_info_filtered_dispatch_state$] [<strong>Run Duration:</strong> $tok_job_info_filtered_run_duration$ sec] [<strong>Updated:</strong>$tok_job_info_filtered_drilldown_updated$]
+          <br></br>
+        [<strong>SID:</strong> $tok_job_info_filtered_sid$]</h2>
+        <p>$tok_job_info_filtered_messages_fatal$</p>
+      </html>
+    </panel>
+
+    <panel depends="$tok_base_jobs_done$,$tok_show_info_filtered_detail$">
+      <input type="link" token="tok_table_reset_detail">
+        <label>Close Details Table</label>
+
+        <choice value="0">Close</choice>
+
+        <change>
+          <condition value="0">
+            <unset token="tok_table_reset_detail"></unset>
+            <unset token="form.tok_table_reset_detail"></unset>
+            <unset token="tok_show_info_filtered_detail"></unset>
+            <unset token="tok_job_info_filtered_sid"></unset>
+            <unset token="tok_job_info_filtered_author"></unset>
+            <unset token="tok_job_info_filtered_dispatch_state"></unset>
+            <unset token="tok_job_info_filtered_run_duration"></unset>
+            <unset token="tok_job_info_filtered_drilldown_updated"></unset>
+            <unset token="tok_job_info_filtered_messages_fatal"></unset>
+          </condition>
+        </change>
+
+      </input>
+    </panel>
+  </row>
+
+  <row>
+    <panel depends="$tok_base_jobs_done$,$tok_show_info_filtered_detail$">
+      <table>
+        <search base="info_filtered_detail_drilldown">
+          <query>
+            <![CDATA[| fields - custom.*, request.*, search
+            | transpose 0]]>
+          </query>
+        </search>
+
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+
+      </table>
+    </panel>
+
+    <panel depends="$tok_base_jobs_done$,$tok_show_info_filtered_detail$">
+      <table>
+        <search base="info_filtered_detail_drilldown">
+          <query>
+            <![CDATA[ fields search
+            | rex field=search mode=sed "s/([\r\n])\s+\|/\1|/g"
+            | transpose 0]]>
+          </query>
+        </search>
+
+        <option name="count">10</option>
+        <option name="drilldown">none</option>
+
+      </table>
+    </panel>
+  </row>
+
+</form>

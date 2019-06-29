@@ -1,0 +1,153 @@
+<!--
+  Drivestats Splunk App for the SPL_UK User Group
+  Copyright (C) 2019 Graham Morley
+
+  A full copy of the license can be found in the LICENSE.md file
+  in the root of the app directory.
+-->
+
+<dashboard theme="dark">
+  <label>Overview</label>
+
+  <row>
+
+    <panel>
+      <html>
+
+        <!-- .table is the Splunk class called 'table' -->
+        <style  type="text/css">
+          .table td {
+          padding:15px;
+          width:150px;
+          }
+
+          .table img:hover {
+          opacity: 0.5;
+          }
+        </style>
+
+        <body>
+
+          <div>
+            <h1>Introduction</h1>
+            <p>Welcome to the <i class="icon-splunk" style="font-size:20px"></i> Drivestats Demo App.</p>
+          </div>
+
+          <p><br></br></p>
+
+          <div>
+            <h1>Dashboards</h1>
+            <table class="table">
+
+              <tr>
+
+                <td>
+                  <a href="1_stats_vs_tstats">
+                    <img src="/static/app/drivestats/stats_vs_tstats-1-150.png"></img>
+                  </a>
+                </td>
+                <td>
+                  <p><a class="external" href="1_stats_vs_tstats">1. Stats vs Tstat</a></p>
+                  <p>This Dashboard demonstrates the difference between the <code>stats</code> and <code>tstats</code> commands</p>
+                </td>
+
+                <td>
+                  <a href="2_multi_search_vs_single_search">
+                    <img src="/static/app/drivestats/multi_search_vs_single_search-1-150.png"></img>
+                  </a>
+                </td>
+                <td>
+                  <p><a class="external" href="2_multi_search_vs_single_search">2. Multi Search vs Single Search</a></p>
+                  <p>This Dashboard looks at how the generate multiple Single Value panels from a single Search</p>
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td>
+                  <a href="3_data_model_tstats">
+                    <img src="/static/app/drivestats/data_model_tstats-1-150.png"></img>
+                  </a>
+                </td>
+                <td>
+                  <p><a class="external" href="3_data_model_tstats">3. Data Model Tstats</a></p>
+                  <p>This Dashboard shows the performance of Accelerated Data Models using the <code>tstats</code> command</p>
+                </td>
+
+                <td>
+                  <a href="4_data_model_multi_tstats">
+                    <img src="/static/app/drivestats/data_model_multi_tstats-1-150.png"></img>
+                  </a>
+                </td>
+                <td>
+                  <p><a class="external" href="4_data_model_multi_tstats">4. Data Model Multi Tstats</a></p>
+                  <p>This is the <i>&quot;it depends&quot;</i> dashboard... Forget everything we just looked at; there's always exceptions</p>
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td>
+                  <a href="tools_index_info">
+                    <img src="/static/app/drivestats/tools_index_info-1-150.png"></img>
+                  </a>
+                </td>
+                <td>
+                  <p><a class="external" href="tools_index_info">Tools - Index Info</a></p>
+                  <p>Explore high level information about Indexes</p>
+                  <p>We also demonstrate how to use show tokens and search inspector information for debugging</p>
+                </td>
+
+                <td>
+                  <a href="tools_data_model_info">
+                    <img src="/static/app/drivestats/tools_data_model_info-1-150.png"></img>
+                  </a>
+                </td>
+                <td>
+                  <p><a class="external" href="tools_data_model_info">Tools - Data Model Info</a></p>
+                  <p>A basic Dashboard to visualise the progress and setting of Data Model</p>
+                </td>
+
+              </tr>
+
+            </table>
+          </div>
+
+          <div>
+            <table class="table">
+              <tr>
+                <td>
+                  <h2>Links To Splunk Resources</h2>
+                  <p><a target="_blank" class="external" href="http://docs.splunk.com/Documentation/Splunk">Splunk - Online Docs</a></p>
+                  <p><a target="_blank" class="external" href="https://bitbucket.org/gvmorley/drivestats/src/master/">Bitbucket - drivestats Repository</a></p>
+                </td>
+                <td>
+                  <h2>Links Backblaze Resources</h2>
+                  <p><a target="_blank" class="external" href="https://www.backblaze.com/">Backblaze - Homepage</a></p>
+                  <p><a target="_blank" class="external" href="https://www.backblaze.com/b2/hard-drive-test-data.html">Backblaze - Hard Drive Data and Stats</a></p>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!--<div>
+            <table class="table">
+              <tr>
+                <td>
+                  <h2>Links To Dashboards</h2>
+                  <p><a class="external" href="overview">Overview</a></p>
+                  <p><a class="external" href="overview">Overview</a></p>
+                </td>
+              </tr>
+            </table>
+          </div>-->
+
+        </body>
+      </html>
+    </panel>
+
+  </row>
+
+</dashboard>

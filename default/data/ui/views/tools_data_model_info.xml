@@ -1,0 +1,307 @@
+<!--
+  Drivestats Splunk App for the SPL_UK User Group
+  Copyright (C) 2019 Graham Morley
+
+  A full copy of the license can be found in the LICENSE.md file
+  in the root of the app directory.
+-->
+
+<form hideEdit="false" hideFilters="false" theme="dark">
+  <label>Tools - Data Model Info</label>
+
+  <fieldset autoRun="true" submitButton="false">
+
+    <input type="dropdown" token="tok_splunk_server" searchWhenChanged="true">
+      <label>Select Server</label>
+
+      <search>
+        <query>
+          <![CDATA[| rest /servicesNS/-/-/server/info]]>
+        </query>
+      </search>
+
+      <fieldForLabel>splunk_server</fieldForLabel>
+      <fieldForValue>splunk_server</fieldForValue>
+
+      <selectFirstChoice>true</selectFirstChoice>
+
+      <change>
+        <unset token="tok_dm_app"></unset>
+        <unset token="tok_dm_app_model"></unset>
+        <unset token="tok_dm_refres_int"></unset>
+        <unset token="form.tok_dm_app"></unset>
+        <unset token="form.tok_dm_app_model"></unset>
+        <unset token="form.tok_dm_refres_int"></unset>
+        <unset token="tok_acc_in_progress_show"></unset>
+        <unset token="tok_acc_complete_perc_show"></unset>
+        <unset token="tok_acc_size_show"></unset>
+      </change>
+
+    </input>
+
+    <input type="dropdown" token="tok_dm_app" searchWhenChanged="true" depends="$tok_splunk_server$">
+      <label>Select App</label>
+
+      <search>
+        <query>
+          <![CDATA[| rest splunk_server=$tok_splunk_server$ /servicesNS/-/-/data/models
+          | stats count by eai:appName]]>
+        </query>
+      </search>
+
+      <fieldForLabel>eai:appName</fieldForLabel>
+      <fieldForValue>eai:appName</fieldForValue>
+
+      <choice value="-">All</choice>
+
+      <default>All</default>
+
+      <change>
+        <unset token="tok_dm_app_model"></unset>
+        <unset token="form.tok_dm_app_model"></unset>
+        <unset token="tok_acc_in_progress_show"></unset>
+        <unset token="tok_acc_complete_perc_show"></unset>
+        <unset token="tok_acc_size_show"></unset>
+      </change>
+
+    </input>
+
+    <input type="dropdown" token="tok_dm_app_model" searchWhenChanged="true" depends="$tok_splunk_server$,$tok_dm_app$">
+      <label>Select Datamodel Name</label>
+
+      <search>
+        <query>
+          <![CDATA[| rest splunk_server=$tok_splunk_server$ /servicesNS/-/$tok_dm_app$/data/models
+          | stats list(acceleration) as acceleration by eai:appName,title
+          | eval title2=if(acceleration=1,'title'." (Acc)",'title'." (Non-Acc)")]]>
+        </query>
+      </search>
+
+      <fieldForLabel>title2</fieldForLabel>
+      <fieldForValue>title</fieldForValue>
+
+      <choice value="/">All</choice>
+
+      <change>
+        <unset token="tok_acc_in_progress_show"></unset>
+        <unset token="tok_acc_complete_perc_show"></unset>
+        <unset token="tok_acc_size_show"></unset>
+      </change>
+
+    </input>
+
+    <input type="dropdown" token="tok_dm_refresh_int" searchWhenChanged="true" depends="$tok_splunk_server$,$tok_dm_app$,$tok_dm_app_model$">
+      <label>Refresh Detail Interval</label>
+
+      <choice value="5m">5 Min</choice>
+      <choice value="1m">1 Min</choice>
+      <choice value="30s">30 Sec</choice>
+      <choice value="10s">10 Sec</choice>
+
+      <default>5 Min</default>
+
+    </input>
+
+  </fieldset>
+
+  <search id="base_stats">
+    <query>
+      <![CDATA[| rest splunk_server=$tok_splunk_server$ /servicesNS/-/-/data/models/
+      | fields title eai:appName acceleration
+      | stats distinct_count(title) as total, distinct_count(eai:appName) as total_app, distinct_count(eval(if('acceleration'=1,title,null()))) as total_acc]]>
+    </query>
+  </search>
+
+  <search id="model_data_stats" base="model_data">
+    <query>
+      <![CDATA[| transpose 0 header_field=column
+      | stats sum(sum_summary.size_GB) as total_acc_size, sum(sum_summary.is_inprogress) as total_acc_in_progress, sum(sum_summary.complete) as total_acc_complete, count(sum_title) as total_acc
+      | eval total_acc_complete_perc=round((total_acc_complete/total_acc)*100,2)]]>
+    </query>
+  </search>
+
+  <row>
+
+    <panel>
+      <html>
+        <body>
+
+          <div>
+            <h1>Data Model Information</h1>
+            <p>Something, Something, Darkside</p>
+            <p>It's a Trap</p>
+          </div>
+
+        </body>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_splunk_server$">
+      <single>
+        <search base="base_stats">
+          <query>
+            <![CDATA[| fields total]]>
+          </query>
+        </search>
+
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Total Datamodels</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_splunk_server$">
+      <single>
+        <search base="base_stats">
+          <query>
+            <![CDATA[| fields total_acc]]>
+          </query>
+        </search>
+
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Total Accelerated</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_splunk_server$">
+      <single>
+        <search base="base_stats">
+          <query>
+            <![CDATA[| fields total_app]]>
+          </query>
+        </search>
+
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Total Apps</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_splunk_server$,$tok_dm_app$,$tok_dm_app_model$,$tok_acc_in_progress_show$">
+      <single>
+        <search base="model_data_stats">
+
+          <done>
+            <condition match=" isnotnull('result.total_acc_in_progress') ">
+              <set token="tok_acc_in_progress_show">1</set>
+            </condition>
+            <condition>
+              <unset token="tok_acc_in_progress_show"></unset>
+            </condition>
+          </done>
+
+        </search>
+
+        <option name="field">total_acc_in_progress</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Total Acc In Progress</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeValues">[0,10,20,30]</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_splunk_server$,$tok_dm_app$,$tok_dm_app_model$,$tok_acc_complete_perc_show$">
+      <single>
+        <search base="model_data_stats">
+
+          <done>
+            <condition match=" isnotnull('result.total_acc_complete_perc') ">
+              <set token="tok_acc_complete_perc_show">1</set>
+            </condition>
+            <condition>
+              <unset token="tok_acc_complete_perc_show"></unset>
+            </condition>
+          </done>
+
+        </search>
+
+        <option name="field">total_acc_complete_perc</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="unit">%</option>
+        <option name="underLabel">Total Acc Complete</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0xd93f3c","0xf58f39","0xf7bc38","0x6db7c6","0x65a637","0x65a637"]</option>
+        <option name="rangeValues">[0,30,70,99,100]</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_splunk_server$,$tok_dm_app$,$tok_dm_app_model$,$tok_acc_size_show$">
+      <single>
+        <search base="model_data_stats">
+
+          <done>
+            <condition match=" isnotnull('result.total_acc_size') ">
+              <set token="tok_acc_size_show">1</set>
+            </condition>
+            <condition>
+              <unset token="tok_acc_size_show"></unset>
+            </condition>
+          </done>
+
+        </search>
+
+        <option name="field">total_acc_size</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="unit">GB</option>
+        <option name="underLabel">Total Acc Size</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_splunk_server$,$tok_dm_app$,$tok_dm_app_model$">
+      <title>Datamodels - Server:$tok_splunk_server$ App:$tok_dm_app$ Datamodel:$tok_dm_app_model$</title>
+      <table>
+        <search id="model_data">
+          <query>
+            <![CDATA[| rest splunk_server=$tok_splunk_server$ /servicesNS/-/$tok_dm_app$/data/models/$tok_dm_app_model$
+            | fields title disabled acceleration acceleration.cron_schedule acceleration.earliest_time eai:appName eai:acl.app eai:acl.perms* eai:acl.sharing eai:type dataset.type splunk_server
+            | eval dm_acc_string=if(acceleration=1,"tstats:DM_".'eai:appName'."_".title,"")
+            | join type=outer dm_acc_string
+            [| rest splunk_server=$tok_splunk_server$ /servicesNS/-/$tok_dm_app$/data/models/$tok_dm_app_model$
+            | fields title acceleration eai:appName
+            | eval dm_acc_string=if(acceleration=1,"tstats:DM_".'eai:appName'."_".title,"")
+            | map search="| rest splunk_server=$tok_splunk_server$ /servicesNS/-/$tok_dm_app$/admin/summarization/$$dm_acc_string$$"
+            | fields title summary.complete summary.is_inprogress summary.size summary.earliest_time summary.latest_time summary.mod_time
+            | rename * as sum_*
+            | eval dm_acc_string=sum_title]
+            | foreach sum_summary.*_time
+            [eval <<FIELD>>=strftime('<<FIELD>>',"%c")]
+            | eval sum_summary.size_GB=round('sum_summary.size'/1024/1024/1024,2)
+            | eval sum_summary.size_MB=round('sum_summary.size'/1024/1024,2)
+            | fields - _timediff
+            | transpose 0 header_field=title]]>
+          </query>
+          <refresh>$tok_dm_refresh_int$</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">25</option>
+      </table>
+    </panel>
+
+  </row>
+
+</form>

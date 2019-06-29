@@ -1,0 +1,8 @@
+# Exclude local.meta files
+**/metadata/local.meta
+
+# Exclude those tedious MacOS files
+**/.DS_Store
+
+# Exclude App Logos
+static

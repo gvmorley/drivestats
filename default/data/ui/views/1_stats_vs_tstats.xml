@@ -1,0 +1,427 @@
+<!--
+  Drivestats Splunk App for the SPL_UK User Group
+  Copyright (C) 2019 Graham Morley
+
+  A full copy of the license can be found in the LICENSE.md file
+  in the root of the app directory.
+-->
+
+<form hideEdit="false" hideFilters="true" theme="dark">
+  <label>1. - Stats vs Tstats</label>
+
+  <fieldset autoRun="true" submitButton="false">
+
+    <input type="dropdown" token="tok_index" searchWhenChanged="true">
+      <label>Drivestats Index</label>
+
+      <choice value="drivestats">drivestats</choice>
+
+      <default>drivestats</default>
+
+    </input>
+
+    <input type="dropdown" token="tok_time_selection" searchWhenChanged="true">
+      <label>Select Time</label>
+
+      <choice value="all">All Time</choice>
+      <choice value="2013">2013</choice>
+      <choice value="2014">2014</choice>
+      <choice value="2015">2015</choice>
+      <choice value="2016">2016</choice>
+      <choice value="2017">2017</choice>
+      <choice value="2018">2018</choice>
+
+      <default>2014</default>
+
+      <change>
+        <condition value="all">
+          <set token="tok_time_earliest">0</set>
+          <set token="tok_time_latest">now</set>
+        </condition>
+        <condition value="2013">
+          <set token="tok_time_earliest">1356998400</set>
+          <set token="tok_time_latest">1388534400</set>
+        </condition>
+        <condition value="2014">
+          <set token="tok_time_earliest">1388534400</set>
+          <set token="tok_time_latest">1420070400</set>
+        </condition>
+        <condition value="2015">
+          <set token="tok_time_earliest">1420070400</set>
+          <set token="tok_time_latest">1451606400</set>
+        </condition>
+        <condition value="2016">
+          <set token="tok_time_earliest">1451606400</set>
+          <set token="tok_time_latest">1483228800</set>
+        </condition>
+        <condition value="2017">
+          <set token="tok_time_earliest">1483228800</set>
+          <set token="tok_time_latest">1514764800</set>
+        </condition>
+        <condition value="2018">
+          <set token="tok_time_earliest">1514764800</set>
+          <set token="tok_time_latest">1546300800</set>
+        </condition>
+      </change>
+
+    </input>
+
+  </fieldset>
+
+  <row>
+
+    <panel>
+      <html>
+        <body>
+
+          <div>
+            <h1>Summary</h1>
+            <p>This is a classic example of the difference in search raw index data vs tsidx data</p>
+            <p>New users to Splunk may not be aware of the <code>tstats</code> syntax for faster searching of some key/value pairs</p>
+          </div>
+
+        </body>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel>
+      <title>Stats Search Against Raw</title>
+
+      <input type="link" token="tok_step_1">
+        <label>Let's Go:</label>
+
+        <choice value="0">Show Search</choice>
+        <choice value="1">Reset</choice>
+
+        <change>
+          <condition value="0">
+            <unset token="tok_step_1"></unset>
+            <unset token="form.tok_step_1"></unset>
+            <set token="tok_step_1_show">1</set>
+            <set token="tok_step_1_index">$tok_index$</set>
+            <set token="tok_step_1_dc_source_colour">0</set>
+            <set token="tok_step_1_dc_sourcetype_colour">0</set>
+          </condition>
+          <condition value="1">
+            <unset token="tok_step_1"></unset>
+            <unset token="form.tok_step_1"></unset>
+            <unset token="tok_step_1_show"></unset>
+            <unset token="tok_step_1_index"></unset>
+            <set token="tok_step_1_dc_source_colour">0</set>
+            <set token="tok_step_1_dc_sourcetype_colour">0</set>
+          </condition>
+        </change>
+
+      </input>
+
+      <input type="link" token="tok_step_1_spl">
+        <label>Show SPL</label>
+
+        <choice value="0">No</choice>
+        <choice value="1">Yes</choice>
+
+        <default>No</default>
+
+        <change>
+          <condition value="1">
+            <set token="tok_step_1_spl_show">1</set>
+          </condition>
+          <condition>
+            <unset token="tok_step_1_spl_show"></unset>
+          </condition>
+        </change>
+
+      </input>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of Source : Raw Search : $tok_step_1_dc_source_duration$ secs</title>
+      <single>
+
+        <search>
+          <query>
+            <![CDATA[index=$tok_step_1_index$
+            | stats distinct_count(source) as dc_source]]>
+          </query>
+
+          <earliest>$tok_time_earliest$</earliest>
+          <latest>$tok_time_latest$</latest>
+
+          <progress>
+            <eval token="tok_step_1_dc_source_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_source_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_source_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_source_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_source_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of Sourcetype : Raw Search : $tok_step_1_dc_sourcetype_duration$ secs</title>
+      <single>
+
+        <search>
+          <query>
+            <![CDATA[index=$tok_step_1_index$
+            | stats distinct_count(sourcetype) as dc_sourcetype]]>
+          </query>
+
+          <earliest>$tok_time_earliest$</earliest>
+          <latest>$tok_time_latest$</latest>
+
+          <progress>
+            <eval token="tok_step_1_dc_sourcetype_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_sourcetype_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_sourcetype_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_sourcetype_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_sourcetype_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_spl_show$">
+
+      <html>
+        <pre class="prettyprint"><span class="pln"><![CDATA[index=$tok_step_1_index$]]></span>
+        <span class="pln"><![CDATA[| stats distinct_count(source) as dc_source]]></span></pre>
+      </html>
+
+    </panel>
+
+    <panel depends="$tok_step_1_spl_show$">
+
+      <html>
+        <pre class="prettyprint"><span class="pln"><![CDATA[index=$tok_step_1_index$]]></span>
+        <span class="pln"><![CDATA[| stats distinct_count(sourcetype) as dc_sourcetype]]></span></pre>
+      </html>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel>
+      <title>Stats Search Against TSTATS</title>
+
+      <input type="link" token="tok_step_2">
+        <label>Let's Go:</label>
+
+        <choice value="0">Show Search</choice>
+        <choice value="1">Reset</choice>
+
+        <change>
+          <condition value="0">
+            <unset token="tok_step_2"></unset>
+            <unset token="form.tok_step_2"></unset>
+            <set token="tok_step_2_show">1</set>
+            <set token="tok_step_2_index">$tok_index$</set>
+            <set token="tok_step_2_dc_source_colour">0</set>
+            <set token="tok_step_2_dc_sourcetype_colour">0</set>
+          </condition>
+          <condition value="1">
+            <unset token="tok_step_2"></unset>
+            <unset token="form.tok_step_2"></unset>
+            <unset token="tok_step_2_show"></unset>
+            <unset token="tok_step_2_index"></unset>
+            <set token="tok_step_2_dc_source_colour">0</set>
+            <set token="tok_step_2_dc_sourcetype_colour">0</set>
+          </condition>
+        </change>
+
+      </input>
+
+      <input type="link" token="tok_step_2_spl">
+        <label>Show SPL</label>
+
+        <choice value="0">No</choice>
+        <choice value="1">Yes</choice>
+
+        <default>No</default>
+
+        <change>
+          <condition value="1">
+            <set token="tok_step_2_spl_show">1</set>
+          </condition>
+          <condition>
+            <unset token="tok_step_2_spl_show"></unset>
+          </condition>
+        </change>
+
+      </input>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of Source : TSTATS Search : $tok_step_2_dc_source_duration$ secs</title>
+      <single>
+
+        <search>
+          <query>
+            <![CDATA[| tstats distinct_count(source) as dc_source where index=$tok_step_2_index$]]>
+          </query>
+
+          <earliest>$tok_time_earliest$</earliest>
+          <latest>$tok_time_latest$</latest>
+
+          <progress>
+            <eval token="tok_step_2_dc_source_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_dc_source_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_dc_source_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_dc_source_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_dc_source_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of Sourcetype : TSTATS Search : $tok_step_2_dc_sourcetype_duration$ secs</title>
+      <single>
+
+        <search>
+          <query>
+            <![CDATA[| tstats distinct_count(sourcetype) as dc_sourcetype where index=$tok_step_2_index$]]>
+          </query>
+
+          <earliest>$tok_time_earliest$</earliest>
+          <latest>$tok_time_latest$</latest>
+
+          <progress>
+            <eval token="tok_step_2_dc_sourcetype_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_dc_sourcetype_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_dc_sourcetype_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_dc_sourcetype_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_dc_sourcetype_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_spl_show$">
+
+      <html>
+        <pre class="prettyprint"><span class="pln"><![CDATA[| tstats distinct_count(source) as dc_source where index=$tok_step_2_index$]]></span></pre>
+      </html>
+
+    </panel>
+
+    <panel depends="$tok_step_2_spl_show$">
+
+      <html>
+        <pre class="prettyprint linenums"><span class="pln"><![CDATA[| tstats distinct_count(sourcetype) as dc_sourcetype where index=$tok_step_2_index$]]></span></pre>
+      </html>
+
+    </panel>
+
+  </row>
+
+</form>

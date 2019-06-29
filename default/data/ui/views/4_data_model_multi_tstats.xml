@@ -1,0 +1,2857 @@
+<!--
+  Drivestats Splunk App for the SPL_UK User Group
+  Copyright (C) 2019 Graham Morley
+
+  A full copy of the license can be found in the LICENSE.md file
+  in the root of the app directory.
+-->
+
+<form hideEdit="false" hideFilters="true" theme="dark">
+  <label>4. - Data Model Multi Tstats</label>
+
+  <init>
+    <set token="tok_step_1_total_duration">0</set>
+    <set token="tok_step_2_total_duration">0</set>
+    <set token="tok_step_2_max_duration">0</set>
+    <set token="tok_step_2_min_duration">0</set>
+  </init>
+
+  <fieldset autoRun="true" submitButton="false">
+
+    <input type="dropdown" token="tok_index" searchWhenChanged="true">
+      <label>Drivestats Index</label>
+
+      <choice value="drivestats">drivestats</choice>
+
+      <default>drivestats</default>
+
+    </input>
+
+    <input type="dropdown" token="tok_dm" searchWhenChanged="true">
+      <label>Drivestats Data Model</label>
+
+      <choice value="drivestats_acc">drivestats_acc</choice>
+
+      <default>drivestats_acc</default>
+
+    </input>
+
+    <!--<input type="dropdown" token="tok_dm_node" searchWhenChanged="true">
+      <label>Data Model - Node</label>
+
+      <choice value="all">all</choice>
+      <choice value="all.2013">all.2013</choice>
+      <choice value="all.2014">all.2014</choice>
+      <choice value="all.2015">all.2015</choice>
+      <choice value="all.2016">all.2016</choice>
+      <choice value="all.2017">all.2017</choice>
+      <choice value="all.2018">all.2018</choice>
+
+      <default>all</default>
+
+    </input>-->
+
+    <input type="dropdown" token="tok_time_selection" searchWhenChanged="true">
+      <label>Select Time</label>
+
+      <choice value="all">All Time</choice>
+      <choice value="2013">2013</choice>
+      <choice value="2014">2014</choice>
+      <choice value="2015">2015</choice>
+      <choice value="2016">2016</choice>
+      <choice value="2017">2017</choice>
+      <choice value="2018">2018</choice>
+
+      <default>All Time</default>
+
+      <change>
+        <condition value="all">
+          <set token="tok_time_earliest">0</set>
+          <set token="tok_time_latest">now</set>
+        </condition>
+        <condition value="2013">
+          <set token="tok_time_earliest">1356998400</set>
+          <set token="tok_time_latest">1388534400</set>
+        </condition>
+        <condition value="2014">
+          <set token="tok_time_earliest">1388534400</set>
+          <set token="tok_time_latest">1420070400</set>
+        </condition>
+        <condition value="2015">
+          <set token="tok_time_earliest">1420070400</set>
+          <set token="tok_time_latest">1451606400</set>
+        </condition>
+        <condition value="2016">
+          <set token="tok_time_earliest">1451606400</set>
+          <set token="tok_time_latest">1483228800</set>
+        </condition>
+        <condition value="2017">
+          <set token="tok_time_earliest">1483228800</set>
+          <set token="tok_time_latest">1514764800</set>
+        </condition>
+        <condition value="2018">
+          <set token="tok_time_earliest">1514764800</set>
+          <set token="tok_time_latest">1546300800</set>
+        </condition>
+      </change>
+
+    </input>
+
+  </fieldset>
+
+  <row>
+
+    <panel>
+      <html>
+        <body>
+
+          <div>
+            <h1>Summary</h1>
+            <p>Like all things with Splunk. There's not always one hard and fast rule...</p>
+            <p><code>tstats</code> with data models are great. But there are some edge cases where it might actually be better to have multiple searches. <i>(Yes... I know... I said this was bad...)</i></p>
+            <p>The edge cases are usually where you want to split the <code>tstats</code> data by another field.</p>
+            <p>In this example, we look at splitting the data by <code>sourcetype</code>, as this contains the year.</p>
+            <p>The faster method actually turns out to be multiple searches, as we have 'pre computed' this in our data model with different child nodes.</p>
+          </div>
+
+        </body>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel>
+      <title>Single Base Search with Tstats (eval(match())) : Total Search Time : $tok_step_1_total_duration$ sec</title>
+
+      <input type="link" token="tok_step_1">
+        <label>Let's Go:</label>
+
+        <choice value="0">Show Search</choice>
+        <choice value="1">Reset</choice>
+
+        <change>
+          <condition value="0">
+            <unset token="tok_step_1"></unset>
+            <unset token="form.tok_step_1"></unset>
+            <set token="tok_step_1_show">1</set>
+            <set token="tok_step_1_index">$tok_index$</set>
+            <set token="tok_step_1_dc_hgst_colour">0</set>
+            <set token="tok_step_1_dc_hitachi_colour">0</set>
+            <set token="tok_step_1_dc_wdc_colour">0</set>
+            <set token="tok_step_1_dc_st_colour">0</set>
+            <set token="tok_step_1_dc_samsung_colour">0</set>
+            <set token="tok_step_1_dc_toshiba_colour">0</set>
+            <set token="tok_step_1_total_duration">0</set>
+          </condition>
+          <condition value="1">
+            <unset token="tok_step_1"></unset>
+            <unset token="form.tok_step_1"></unset>
+            <unset token="tok_step_1_show"></unset>
+            <unset token="tok_step_1_index"></unset>
+            <set token="tok_step_1_dc_hgst_colour">0</set>
+            <set token="tok_step_1_dc_hitachi_colour">0</set>
+            <set token="tok_step_1_dc_wdc_colour">0</set>
+            <set token="tok_step_1_dc_st_colour">0</set>
+            <set token="tok_step_1_dc_samsung_colour">0</set>
+            <set token="tok_step_1_dc_toshiba_colour">0</set>
+            <set token="tok_step_1_total_duration">0</set>
+          </condition>
+        </change>
+
+      </input>
+
+      <input type="link" token="tok_step_1_spl">
+        <label>Show SPL</label>
+
+        <choice value="0">No</choice>
+        <choice value="1">Yes</choice>
+
+        <default>No</default>
+
+        <change>
+          <condition value="1">
+            <set token="tok_step_1_spl_show">1</set>
+          </condition>
+          <condition>
+            <unset token="tok_step_1_spl_show"></unset>
+          </condition>
+        </change>
+
+      </input>
+
+      <search id="base_step_1" depends="$tok_step_1_show$">
+        <query>
+          <![CDATA[| tstats summariesonly=t count from datamodel=drivestats_acc where nodename=all by sourcetype,all.model
+          | stats
+          distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst
+          distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi
+          distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc
+          distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st
+          distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung
+          distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba
+          by sourcetype
+          | rex field=sourcetype "drivestats:(?<year>\d{4})"
+          | fields - sourcetype]]>
+        </query>
+
+        <earliest>$tok_time_earliest$</earliest>
+        <latest>$tok_time_latest$</latest>
+
+        <progress>
+          <eval token="tok_step_1_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+        </progress>
+
+        <done>
+          <eval token="tok_step_1_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+        </done>
+
+      </search>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <html>
+        <h3>2014 - Results</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_1_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2014"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_1_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2014"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_1_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2014"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of ST* Models: $tok_step_1_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2014"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_1_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2014"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_1_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2014"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <html>
+        <h3>2015 - Results</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_1_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2015"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_1_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2015"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_1_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2015"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of ST* Models: $tok_step_1_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2015"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_1_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2015"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_1_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2015"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <html>
+        <h3>2016 - Results</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_1_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2016"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_1_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2016"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_1_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2016"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of ST* Models: $tok_step_1_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2016"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_1_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2016"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_1_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2016"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <html>
+        <h3>2017 - Results</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_1_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2017"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_1_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2017"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_1_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2017"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of ST* Models: $tok_step_1_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2017"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_1_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2017"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_1_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2017"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <html>
+        <h3>2018 - Results</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_1_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2018"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_1_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2018"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_1_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2018"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of ST* Models: $tok_step_1_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2018"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_1_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2018"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_1_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_1_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_1">
+          <query>
+            <![CDATA[| where year="2018"]]>
+          </query>
+
+          <progress>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_1_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_1_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_1_spl_show$">
+
+      <html>
+        <pre class="prettyprint"><span class="pln"><![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=all by sourcetype,all.model]]></span>
+        <span class="pln"><![CDATA[| stats]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]></span>
+        <span class="pln"><![CDATA[by sourcetype]]></span>
+        <span class="pln"><![CDATA[| rex field=sourcetype "drivestats:(?<year>\d{4})"]]></span>
+        <span class="pln"><![CDATA[| fields - sourcetype]]></span></pre>
+      </html>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel>
+      <title>Multi Base Search with Tstats (eval(match())) : [Combined Search Time : $tok_step_2_total_duration$ sec] | [Max Search Time: $tok_step_2_max_duration$ sec] | Min Search Time: $tok_step_2_min_duration$ sec]</title>
+
+      <input type="link" token="tok_step_2">
+        <label>Let's Go:</label>
+
+        <choice value="0">Show Search</choice>
+        <choice value="1">Reset</choice>
+
+        <change>
+          <condition value="0">
+            <unset token="tok_step_2"></unset>
+            <unset token="form.tok_step_2"></unset>
+            <set token="tok_step_2_show">1</set>
+            <set token="tok_step_2_index">$tok_index$</set>
+            <set token="tok_step_2_dc_hgst_colour">0</set>
+            <set token="tok_step_2_dc_hitachi_colour">0</set>
+            <set token="tok_step_2_dc_wdc_colour">0</set>
+            <set token="tok_step_2_dc_st_colour">0</set>
+            <set token="tok_step_2_dc_samsung_colour">0</set>
+            <set token="tok_step_2_dc_toshiba_colour">0</set>
+            <set token="tok_step_2_total_duration">0</set>
+            <set token="tok_step_2_max_duration">0</set>
+            <set token="tok_step_2_min_duration">0</set>
+          </condition>
+          <condition value="1">
+            <unset token="tok_step_2"></unset>
+            <unset token="form.tok_step_2"></unset>
+            <unset token="tok_step_2_show"></unset>
+            <unset token="tok_step_2_index"></unset>
+            <set token="tok_step_2_dc_hgst_colour">0</set>
+            <set token="tok_step_2_dc_hitachi_colour">0</set>
+            <set token="tok_step_2_dc_wdc_colour">0</set>
+            <set token="tok_step_2_dc_st_colour">0</set>
+            <set token="tok_step_2_dc_samsung_colour">0</set>
+            <set token="tok_step_2_dc_toshiba_colour">0</set>
+            <set token="tok_step_2_total_duration">0</set>
+            <set token="tok_step_2_max_duration">0</set>
+            <set token="tok_step_2_min_duration">0</set>
+          </condition>
+        </change>
+
+      </input>
+
+      <input type="link" token="tok_step_2_spl">
+        <label>Show SPL</label>
+
+        <choice value="0">No</choice>
+        <choice value="1">Yes</choice>
+
+        <default>No</default>
+
+        <change>
+          <condition value="1">
+            <set token="tok_step_2_spl_show">1</set>
+          </condition>
+          <condition>
+            <unset token="tok_step_2_spl_show"></unset>
+          </condition>
+        </change>
+
+      </input>
+
+      <search id="base_step_2_1" depends="$tok_step_2_show$">
+        <query>
+          <![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=all.2014 by all.model
+          | stats
+          distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst
+          distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi
+          distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc
+          distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st
+          distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung
+          distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]>
+        </query>
+
+        <earliest>$tok_time_earliest$</earliest>
+        <latest>$tok_time_latest$</latest>
+
+        <progress>
+          <eval token="tok_step_2_1_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </progress>
+
+        <done>
+          <eval token="tok_step_2_1_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </done>
+
+      </search>
+
+      <search id="base_step_2_2" depends="$tok_step_2_show$">
+        <query>
+          <![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=all.2015 by all.model
+          | stats
+          distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst
+          distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi
+          distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc
+          distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st
+          distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung
+          distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]>
+        </query>
+
+        <earliest>$tok_time_earliest$</earliest>
+        <latest>$tok_time_latest$</latest>
+
+        <progress>
+          <eval token="tok_step_2_2_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </progress>
+
+        <done>
+          <eval token="tok_step_2_2_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </done>
+
+      </search>
+
+      <search id="base_step_2_3" depends="$tok_step_2_show$">
+        <query>
+          <![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=all.2016 by all.model
+          | stats
+          distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst
+          distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi
+          distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc
+          distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st
+          distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung
+          distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]>
+        </query>
+
+        <earliest>$tok_time_earliest$</earliest>
+        <latest>$tok_time_latest$</latest>
+
+        <progress>
+          <eval token="tok_step_2_3_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </progress>
+
+        <done>
+          <eval token="tok_step_2_3_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </done>
+
+      </search>
+
+      <search id="base_step_2_4" depends="$tok_step_2_show$">
+        <query>
+          <![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=all.2017 by all.model
+          | stats
+          distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst
+          distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi
+          distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc
+          distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st
+          distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung
+          distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]>
+        </query>
+
+        <earliest>$tok_time_earliest$</earliest>
+        <latest>$tok_time_latest$</latest>
+
+        <progress>
+          <eval token="tok_step_2_4_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </progress>
+
+        <done>
+          <eval token="tok_step_2_4_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </done>
+
+      </search>
+
+      <search id="base_step_2_5" depends="$tok_step_2_show$">
+        <query>
+          <![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=all.2018 by all.model
+          | stats
+          distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst
+          distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi
+          distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc
+          distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st
+          distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung
+          distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]>
+        </query>
+
+        <earliest>$tok_time_earliest$</earliest>
+        <latest>$tok_time_latest$</latest>
+
+        <progress>
+          <eval token="tok_step_2_5_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </progress>
+
+        <done>
+          <eval token="tok_step_2_5_total_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          <eval token="tok_step_2_total_duration"><![CDATA[round($tok_step_2_1_total_duration$+$tok_step_2_2_total_duration$+$tok_step_2_3_total_duration$+$tok_step_2_4_total_duration$+$tok_step_2_5_total_duration$,6)]]></eval>
+          <eval token="tok_step_2_max_duration"><![CDATA[round(max($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+          <eval token="tok_step_2_min_duration"><![CDATA[round(min($tok_step_2_1_total_duration$,$tok_step_2_2_total_duration$,$tok_step_2_3_total_duration$,$tok_step_2_4_total_duration$,$tok_step_2_5_total_duration$),6)]]></eval>
+        </done>
+
+      </search>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <html>
+        <h3>2014 - Results : Individual Search Time : $tok_step_2_1_total_duration$ sec</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_2_1_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_1">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_1_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_1_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_2_1_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_1">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_1_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_1_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_2_1_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_1">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_1_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_1_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of ST* Models: $tok_step_2_1_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_1">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_1_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_1_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_2_1_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_1">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_1_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_1_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_2_1_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_1">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_1_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_1_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_1_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <html>
+        <h3>2015 - Results : Individual Search Time : $tok_step_2_2_total_duration$ sec</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_2_2_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_2">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_2_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_2_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_2_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_2_2_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_2">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_2_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_2_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_2_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_2_2_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_2">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_2_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_2_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_2_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of ST* Models: $tok_step_2_2_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_2">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_2_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_2_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_2_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_2_2_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_2">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_2_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_2_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_2_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_2_2_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_2">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_2_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_2_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_2_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x006d9c","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_2_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <html>
+        <h3>2016 - Results : Individual Search Time : $tok_step_2_3_total_duration$ sec</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_2_3_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_3">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_3_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_3_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_3_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_2_3_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_3">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_3_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_3_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_3_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_2_3_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_3">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_3_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_3_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_3_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of ST* Models: $tok_step_2_3_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_3">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_3_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_3_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_3_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_2_3_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_3">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_3_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_3_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_3_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_2_3_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_3">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_3_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_3_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_3_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf8be34","0xf8be34"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_3_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <html>
+        <h3>2017 - Results : Individual Search Time : $tok_step_2_4_total_duration$ sec</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_2_4_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_4">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_4_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_4_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_4_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_2_4_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_4">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_4_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_4_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_4_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_2_4_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_4">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_4_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_4_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_4_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of ST* Models: $tok_step_2_4_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_4">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_4_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_4_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_4_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_2_4_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_4">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_4_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_4_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_4_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_2_4_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_4">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_4_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_4_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_4_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xf1813f","0xf1813f"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_4_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <html>
+        <h3>2018 - Results : Individual Search Time : $tok_step_2_5_total_duration$ sec</h3>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of HGST* Models: $tok_step_2_5_dc_hgst_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_5">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_5_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_hgst_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_5_dc_hgst_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_hgst_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hgst</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_5_dc_hgst_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of Hitachi* Models: $tok_step_2_5_dc_hitachi_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_5">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_5_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_hitachi_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_5_dc_hitachi_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_hitachi_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_hitachi</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_5_dc_hitachi_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of WDC* Models: $tok_step_2_5_dc_wdc_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_5">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_5_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_wdc_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_5_dc_wdc_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_wdc_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_wdc</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_5_dc_wdc_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of ST* Models: $tok_step_2_5_dc_st_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_5">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_5_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_st_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_5_dc_st_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_st_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_st</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_5_dc_st_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of SAMSUNG* Models: $tok_step_2_5_dc_samsung_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_5">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_5_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_samsung_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_5_dc_samsung_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_samsung_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_samsung</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_5_dc_samsung_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+    <panel depends="$tok_step_2_show$">
+      <title>Distinct Count of TOSHIBA* Models: $tok_step_2_5_dc_toshiba_duration$ secs</title>
+      <single>
+
+        <search base="base_step_2_5">
+          <query></query>
+
+          <progress>
+            <eval token="tok_step_2_5_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_toshiba_colour">0</set>
+          </progress>
+
+          <done>
+            <eval token="tok_step_2_5_dc_toshiba_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_step_2_5_dc_toshiba_colour">1</set>
+          </done>
+
+        </search>
+
+        <option name="field">dc_toshiba</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0xdc4e41","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">$tok_step_2_5_dc_toshiba_colour$</option>
+        <option name="useThousandSeparators">1</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_spl_show$">
+
+      <html>
+        <pre class="prettyprint"><span class="pln"><![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=2014 by all.model]]></span>
+        <span class="pln"><![CDATA[| stats]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]></span></pre>
+      </html>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_spl_show$">
+
+      <html>
+        <pre class="prettyprint"><span class="pln"><![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=2015 by all.model]]></span>
+        <span class="pln"><![CDATA[| stats]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]></span></pre>
+      </html>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_spl_show$">
+
+      <html>
+        <pre class="prettyprint"><span class="pln"><![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=2016 by all.model]]></span>
+        <span class="pln"><![CDATA[| stats]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]></span></pre>
+      </html>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_spl_show$">
+
+      <html>
+        <pre class="prettyprint"><span class="pln"><![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=2017 by all.model]]></span>
+        <span class="pln"><![CDATA[| stats]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]></span></pre>
+      </html>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_step_2_spl_show$">
+
+      <html>
+        <pre class="prettyprint"><span class="pln"><![CDATA[| tstats summariesonly=t count from datamodel=$tok_dm$ where nodename=2018 by all.model]]></span>
+        <span class="pln"><![CDATA[| stats]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^HGST.+"),'all.model',null()))) as dc_hgst]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^Hitachi.+"),'all.model',null()))) as dc_hitachi]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^WDC.+"),'all.model',null()))) as dc_wdc]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^ST.+"),'all.model',null()))) as dc_st]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^SAMSUNG.+"),'all.model',null()))) as dc_samsung]]></span>
+        <span class="pln"><![CDATA[distinct_count(eval(if(match('all.model',"(?i)^TOSHIBA.+"),'all.model',null()))) as dc_toshiba]]></span></pre>
+      </html>
+
+    </panel>
+
+  </row>
+
+</form>

@@ -1,0 +1,425 @@
+<!--
+  Drivestats Splunk App for the SPL_UK User Group
+  Copyright (C) 2019 Graham Morley
+
+  A full copy of the license can be found in the LICENSE.md file
+  in the root of the app directory.
+-->
+
+<form hideEdit="false" hideFilters="true" theme="dark">
+  <label>Tools - Index Info</label>
+  <description></description>
+
+  <fieldset autoRun="true" submitButton="false">
+
+    <input type="dropdown" token="tok_index" searchWhenChanged="true">
+      <label>Drivestats Index</label>
+
+      <choice value="drivestats">drivestats</choice>
+
+      <default>drivestats</default>
+
+    </input>
+
+    <input type="dropdown" token="tok_time_selection" searchWhenChanged="true">
+      <label>Drivestats Index</label>
+
+      <choice value="all">All Time</choice>
+      <choice value="2013">2013</choice>
+      <choice value="2014">2014</choice>
+      <choice value="2015">2015</choice>
+      <choice value="2016">2016</choice>
+      <choice value="2017">2017</choice>
+      <choice value="2018">2018</choice>
+
+      <default>All Time</default>
+
+      <change>
+        <condition value="all">
+          <set token="tok_time_earliest">0</set>
+          <set token="tok_time_latest">now</set>
+        </condition>
+        <condition value="2013">
+          <set token="tok_time_earliest">1356998400</set>
+          <set token="tok_time_latest">1388534400</set>
+        </condition>
+        <condition value="2014">
+          <set token="tok_time_earliest">1388534400</set>
+          <set token="tok_time_latest">1420070400</set>
+        </condition>
+        <condition value="2015">
+          <set token="tok_time_earliest">1420070400</set>
+          <set token="tok_time_latest">1451606400</set>
+        </condition>
+        <condition value="2016">
+          <set token="tok_time_earliest">1451606400</set>
+          <set token="tok_time_latest">1483228800</set>
+        </condition>
+        <condition value="2017">
+          <set token="tok_time_earliest">1483228800</set>
+          <set token="tok_time_latest">1514764800</set>
+        </condition>
+        <condition value="2018">
+          <set token="tok_time_earliest">1514764800</set>
+          <set token="tok_time_latest">1546300800</set>
+        </condition>
+      </change>
+
+    </input>
+
+    <input type="link" token="tok_panel_7_debug">
+      <label>Show Debug</label>
+
+      <choice value="0">No</choice>
+      <choice value="1">Yes</choice>
+
+      <default>No</default>
+
+      <change>
+        <condition value="1">
+          <set token="tok_panel_7_debug_show">1</set>
+        </condition>
+        <condition>
+          <unset token="tok_panel_7_debug_show"></unset>
+        </condition>
+      </change>
+
+    </input>
+
+  </fieldset>
+
+  <search id="base_index_info">
+    <query>
+      <![CDATA[| rest /servicesNS/-/-/data/indexes-extended/$tok_index$
+      | stats
+      sum(total_bucket_count) as total_bucket_count,
+      sum(total_event_count) as total_event_count,
+      sum(total_raw_size) as total_raw_size,
+      sum(total_size) as total_size,
+      min(minTime) as minTime,
+      max(maxTime) as maxTime,
+      by title
+      | eval compress_ratio=round(total_raw_size/total_size,2).":1"]]>
+    </query>
+  </search>
+
+  <row>
+
+    <panel>
+      <html>
+        <body>
+
+          <div>
+            <h1>Summary</h1>
+            <p>Some highlevel info about our Index. The search for the single value panles is driven by a single <code>rest</code> command.</p>
+            <p>The timechart uses a <code>tstats</code> command. In the top level filters, we can also show a hidden debugging menu to help with <code>token</code> and <code>job inspector</code> information.</p>
+          </div>
+
+        </body>
+      </html>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel>
+      <title>Earliest Event Time : Rest : $tok_panel_1_duration$ secs</title>
+      <single>
+
+        <search base="base_index_info">
+          <query></query>
+
+          <done>
+            <eval token="tok_panel_1_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          </done>
+
+        </search>
+
+        <option name="field">minTime</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Field: minTime</option>
+        <option name="useColors">0</option>
+        <option name="colorMode">block</option>
+
+      </single>
+    </panel>
+
+    <panel>
+      <title>Latest Event Time : Rest : $tok_panel_2_duration$ secs</title>
+      <single>
+
+        <search base="base_index_info">
+          <query></query>
+
+          <done>
+            <eval token="tok_panel_2_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          </done>
+
+        </search>
+
+        <option name="field">maxTime</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Field: maxTime</option>
+        <option name="useColors">0</option>
+        <option name="colorMode">block</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel>
+      <title>Total Event Count : Rest : $tok_panel_3_duration$ secs</title>
+      <single>
+
+        <search base="base_index_info">
+          <query></query>
+
+          <done>
+            <eval token="tok_panel_3_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          </done>
+
+        </search>
+
+        <option name="field">total_event_count</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Field: total_event_count</option>
+        <option name="useColors">0</option>
+        <option name="colorMode">block</option>
+
+      </single>
+    </panel>
+
+    <panel>
+      <title>Total Raw Size : Rest : $tok_panel_4_duration$ secs</title>
+      <single>
+
+        <search base="base_index_info">
+          <query></query>
+
+          <done>
+            <eval token="tok_panel_4_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          </done>
+
+        </search>
+
+        <option name="field">total_raw_size</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Field: total_raw_size</option>
+        <option name="useColors">0</option>
+        <option name="colorMode">block</option>
+        <option name="unit">MB</option>
+        <option name="unitPosition">after</option>
+
+      </single>
+    </panel>
+
+    <panel>
+      <title>Total Compressed Size : Rest : $tok_panel_5_duration$ secs</title>
+      <single>
+
+        <search base="base_index_info">
+          <query></query>
+
+          <done>
+            <eval token="tok_panel_5_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          </done>
+
+        </search>
+
+        <option name="field">total_size</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Field: total_size</option>
+        <option name="useColors">0</option>
+        <option name="colorMode">block</option>
+        <option name="unit">MB</option>
+        <option name="unitPosition">after</option>
+
+      </single>
+    </panel>
+
+    <panel>
+      <title>Compression Ratio : Rest : $tok_panel_6_duration$ secs</title>
+      <single>
+
+        <search base="base_index_info">
+          <query></query>
+
+          <done>
+            <eval token="tok_panel_6_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+          </done>
+
+        </search>
+
+        <option name="field">compress_ratio</option>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="underLabel">Field: compress_ratio</option>
+        <option name="useColors">0</option>
+        <option name="colorMode">block</option>
+
+      </single>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel>
+      <title>Count by Sourcetype over Time : Tstats : $tok_panel_7_duration$ secs</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[| tstats count where index=$tok_index$ by _time,sourcetype span=1mon@mon prestats=t
+            | timechart span=1mon@mon count by sourcetype]]>
+          </query>
+
+          <earliest>$tok_time_earliest$</earliest>
+          <latest>$tok_time_latest$</latest>
+
+          <progress>
+            <eval token="tok_panel_7_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_panel_7_scanCount">$job.scanCount$</set>
+            <set token="tok_panel_7_resultCount">$job.resultCount$</set>
+            <set token="tok_panel_7_sid">$job.sid$</set>
+            <set token="tok_panel_7_earliestTime">$job.earliestTime$</set>
+            <set token="tok_panel_7_latestTime">$job.latestTime$</set>
+            <set token="tok_panel_7_remoteSearch">$job.remoteSearch$</set>
+            <set token="tok_panel_7_reportSearch">$job.reportSearch$</set>
+            <set token="tok_panel_7_search">$job.search$</set>
+          </progress>
+
+          <done>
+            <eval token="tok_panel_7_duration"><![CDATA[round($job.runDuration$,6)]]></eval>
+            <set token="tok_panel_7_scanCount">$job.scanCount$</set>
+            <set token="tok_panel_7_resultCount">$job.resultCount$</set>
+            <set token="tok_panel_7_sid">$job.sid$</set>
+            <set token="tok_panel_7_earliestTime">$job.earliestTime$</set>
+            <set token="tok_panel_7_latestTime">$job.latestTime$</set>
+            <set token="tok_panel_7_remoteSearch">$job.remoteSearch$</set>
+            <set token="tok_panel_7_reportSearch">$job.reportSearch$</set>
+            <set token="tok_panel_7_search">$job.search$</set>
+          </done>
+
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.lineWidth">2</option>
+      </chart>
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_panel_7_debug_show$">
+
+      <html>
+        <div>
+          <h1>Debug</h1>
+          <p>Sometime it can be useful to capture Token or Job Information to a panel for debugging:</p>
+          <p><code>tok_panel_7_search</code> : $tok_panel_7_search$</p>
+        </div>
+      </html>
+
+    </panel>
+
+  </row>
+
+  <row>
+
+    <panel depends="$tok_panel_7_debug_show$">
+      <html>
+        <div>
+          <p>General</p>
+        </div>
+
+        <div>
+          <table class="table">
+            <tr>
+              <td><code>tok_index</code> :</td>
+              <td>$tok_index$</td>
+            </tr>
+            <tr>
+              <td><code>form.tok_index</code> :</td>
+              <td>$form.tok_index$</td>
+            </tr>
+            <tr>
+              <td><code>tok_time_selection</code> :</td>
+              <td>$tok_time_selection$</td>
+            </tr>
+            <tr>
+              <td><code>form.tok_time_selection</code> :</td>
+              <td>$form.tok_time_selection$</td>
+            </tr>
+            <tr>
+              <td><code>tok_time_earliest</code> :</td>
+              <td>$tok_time_earliest$</td>
+            </tr>
+            <tr>
+              <td><code>tok_time_latest</code> :</td>
+              <td>$tok_time_latest$</td>
+            </tr>
+          </table>
+        </div>
+      </html>
+
+    </panel>
+
+    <panel depends="$tok_panel_7_debug_show$">
+      <html>
+        <div>
+          <p>Timechart Specific</p>
+        </div>
+
+        <div>
+          <table class="table">
+            <tr>
+              <td><code>tok_panel_7_sid</code> :</td>
+              <td>$tok_panel_7_sid$</td>
+            </tr>
+            <tr>
+              <td><code>tok_panel_7_scanCount</code> :</td>
+              <td>$tok_panel_7_scanCount$</td>
+            </tr>
+            <tr>
+              <td><code>tok_panel_7_resultCount</code> :</td>
+              <td>$tok_panel_7_resultCount$</td>
+            </tr>
+            <tr>
+              <td><code>tok_panel_7_earliestTime</code> :</td>
+              <td>$tok_panel_7_earliestTime$</td>
+            </tr>
+            <tr>
+              <td><code>tok_panel_7_latestTime</code> :</td>
+              <td>$tok_panel_7_latestTime$</td>
+            </tr>
+            <tr>
+              <td><code>tok_panel_7_remoteSearch</code> :</td>
+              <td>$tok_panel_7_remoteSearch$</td>
+            </tr>
+            <tr>
+              <td><code>tok_panel_7_reportSearch</code> :</td>
+              <td>$tok_panel_7_reportSearch$</td>
+            </tr>
+          </table>
+        </div>
+      </html>
+    </panel>
+
+  </row>
+
+</form>

@@ -1,0 +1,35 @@
+<nav search_view="search">
+
+  <view name="overview" default='true' />
+
+  <collection label="Stats">
+   <view name="1_stats_vs_tstats" />
+   <view name="2_multi_search_vs_single_search" />
+   <view name="3_data_model_tstats" />
+   <view name="4_data_model_multi_tstats" />
+  </collection>
+
+  <collection label="Tools">
+   <view source="all" match="Tools" />
+  </collection>
+
+  <collection label="Slides">
+   <view source="all" match="Slides" />
+  </collection>
+
+  <collection label="Monitoring">
+   <view source="all" match="Monitoring" />
+   <a target="_blank" class="external" href="/app/splunk_monitoring_console/search_activity_instance">MC - Search Activity: Instance</a>
+  </collection>
+
+  <a target="_blank" class="external" href="/app/drivestats/data_model_manager?sortKey=displayName&amp;sortDirection=asc&amp;count=20&amp;offset=0&amp;ownerSearch=*&amp;visible=true&amp;appSearch=drivestats">Data Model Manager</a>
+
+  <collection label="Other Dashboards">
+   <view name="search" />
+   <view name="datasets" />
+   <view name="reports" />
+   <view name="alerts" />
+   <view name="dashboards" />
+  </collection>
+
+</nav>
